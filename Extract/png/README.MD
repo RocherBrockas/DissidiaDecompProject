@@ -1,0 +1,1 @@
+10 elements, the png used for the save data cards in the PSP system

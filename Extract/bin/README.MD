@@ -1,0 +1,1 @@
+Bin files are every file the extractor could not identified as magic files normally, those contains data for the game and might be repurposed as their own format
