@@ -1,15 +1,19 @@
 import struct
 import os
 import re
+from pathlib import Path
 
-INFO_FILE = "package_info.bin"
-PKG_FILE = "package.bin"
+# Project root (two levels up from this script: .../Tools/PackageBinExtract)
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-HEADER_SIZE = 0x10
-ENTRY_SIZE  = 12
-FILE_COUNT  = 11043
+INFO_FILE = PROJECT_ROOT / "PlaceYourIsoHere" / "Extracted_Iso" / "PSP_GAME" / "USRDIR" / "DATA" / "package_info.bin"
+PKG_FILE = PROJECT_ROOT / "PlaceYourIsoHere" / "Extracted_Iso" / "PSP_GAME" / "USRDIR" / "DATA" / "package.bin"
 
-SECTOR_SIZE = 0x800
+HEADER_SIZE =0x10
+ENTRY_SIZE =12
+FILE_COUNT =11043
+
+SECTOR_SIZE =0x800
 
 # Signatures known (3-4 bytes ASCII)
 KNOWN_4_ASCII = {
@@ -24,8 +28,11 @@ MESS_KEYS = ("mess",)
 
 PNG_SIG = b"\x89PNG\r\n\x1a\n"
 
+# Output base folder: project root / Extract
+OUT_BASE = PROJECT_ROOT / "Extract"
+
 def ensure_dir(path):
-    os.makedirs(path, exist_ok=True)
+    os.makedirs(str(path), exist_ok=True)
 
 def unique_path(path: str) -> str:
     if not os.path.exists(path):
@@ -81,11 +88,11 @@ def detect_type(data: bytes) -> str:
             discovered_dynamic.add(candidate)
         return candidate
 
-    # 4 premiers octets non nuls -> .dat
+    # 4 first bytes non-null -> .dat
     if len(hdr4) == 4 and all(b != 0x00 for b in hdr4):
         return "dat"
 
-    # fallback binaire
+    # binary fallback
     return "bin"
 
 def sanitize_component(s: str) -> str:
@@ -114,14 +121,15 @@ def write_extracted(hashv: int, ftype: str, data: bytes):
     return out_path
 
 def main():
-    ensure_dir("extract")
+ # Ensure top-level Extract directory exists at project root
+    ensure_dir(OUT_BASE)
     with open(INFO_FILE, "rb") as info, open(PKG_FILE, "rb") as pkg:
         info.seek(HEADER_SIZE)
 
         for i in range(FILE_COUNT):
             entry = info.read(ENTRY_SIZE)
             if len(entry) < ENTRY_SIZE:
-                print(f"[INFO] fin anticipee: entree incomplete a l'index {i}")
+                print(f"[INFO] early end: incomplete entry at index {i}")
                 break
 
             hashv, offset, size_flags = struct.unpack("<III", entry)
@@ -134,16 +142,16 @@ def main():
             data = pkg.read(size)
 
             if len(data) != size:
-                print(f"[WARN] taille lue != taille declaree id={hashv:08X} index={i} declared={size} read={len(data)} offset=0x{real_offset:X}")
+                print(f"[WARN] read size != declared size id={hashv:08X} index={i} declared={size} read={len(data)} offset=0x{real_offset:X}")
 
             ftype = detect_type(data)
             path = write_extracted(hashv, ftype, data)
             print(f"[EXTRACT] id={hashv:08X} type={ftype} -> {path}")
 
-    print("Extraction terminee")
-    print("Stats par type:", type_counts)
+    print("Extraction completed")
+    print("Stats by type:", type_counts)
     if discovered_dynamic:
-        print("Nouveaux types ASCII decouverts:", ", ".join(sorted(discovered_dynamic)))
+        print("New ASCII types discovered:", ", ".join(sorted(discovered_dynamic)))
 
 if __name__ == "__main__":
     main()

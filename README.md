@@ -15,3 +15,12 @@ Tools needed to help with the project:
 # Might be useful later:
 
 - uofw, a reverse engineered PSP kernel & hardware https://github.com/uofw/uofw
+
+# Getting Started
+
+Find a ULUS-10566 ISO of the game and put it in PlaceYourIsoHere, and open it with UMDGen or any ISO extract tool,
+Extract the content to the ISO to the folder PlaceYourIsoHere/Extracted_Iso
+
+Then in the project Root run
+python ./Tools/PackageBinExtract/ExtractPackageBin.py
+This should extract everything to the Extract folder.

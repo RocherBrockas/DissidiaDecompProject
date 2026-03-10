@@ -22,8 +22,8 @@
 *.exsw
 *.kpsh
 *.lrwd
-*.menupak
-*.messpak
+*.menu_pak
+*.mess_pak
 *.mig
 *.gim
 *.mlng
