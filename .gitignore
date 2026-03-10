@@ -7,6 +7,41 @@
 *.obj
 *.elf
 
+# Extracted and Source files
+*.acmd
+*.arc
+*.bin
+*.clsm
+*.dec
+*.des4
+*.dpc
+*.dpr
+*.drr
+due
+*.dur
+*.exsw
+*.kpsh
+*.lrwd
+*.menupak
+*.messpak
+*.mig
+*.gim
+*.mlng
+*.mpk
+*.omg
+*.pbtl
+*.riff
+*.sdcv
+*.seq
+*.smsc
+*.srmc
+*.srsc
+*.sscf
+*.tim2
+*.tpmc
+*.vold
+*.wlcn
+
 # Linker output
 *.ilk
 *.map
@@ -35,6 +70,7 @@
 *.i*86
 *.x86_64
 *.hex
+*.iso
 
 # Debug files
 *.dSYM/
