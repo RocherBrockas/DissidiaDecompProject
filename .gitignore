@@ -17,7 +17,7 @@
 *.dpc
 *.dpr
 *.drr
-due
+*.due
 *.dur
 *.exsw
 *.kpsh
@@ -41,6 +41,11 @@ due
 *.tpmc
 *.vold
 *.wlcn
+*.at3
+*.pmf
+*.sfo
+*.prx
+*.png
 
 # Linker output
 *.ilk
