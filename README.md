@@ -5,6 +5,7 @@ A project about decompiling Dissidia 012 (Duodecim) for the PSP to enable advanc
 
 Tools needed to help with the project:
 
+- XELFViewer https://github.com/horsicq/XELFViewer/releases For reading elf files and understanding overlays files
 - UMDGen https://datacrystal.tcrf.net/wiki/UMDGen
 - PPSSPP https://www.ppsspp.org/
 - Ghidra https://ghidra-sre.org/
