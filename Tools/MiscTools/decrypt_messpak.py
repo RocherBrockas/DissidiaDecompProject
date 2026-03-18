@@ -52,6 +52,12 @@ import struct
 import json
 import argparse
 
+# Force UTF-8 sur stdout/stderr (Windows cp1252 -> problème avec caractères spéciaux)
+if sys.stdout.encoding and sys.stdout.encoding.lower() not in ('utf-8', 'utf-8-sig'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+if sys.stderr.encoding and sys.stderr.encoding.lower() not in ('utf-8', 'utf-8-sig'):
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
 # ── Clé par défaut (32 premiers octets à 0x089D68AA dans l'ISO) ──────────────
 KEY_DEFAULT = bytes.fromhex(
     "3F1C012701C011F2F8C11678B9AD0A30"
@@ -233,7 +239,7 @@ def process_file(path: str, key: bytes, out_dir: str, write_raw: bool):
     txt_out  = os.path.join(out_dir, f"{base}_strings.txt")
     json_out = os.path.join(out_dir, f"{base}_strings.json")
 
-    with open(txt_out, "w", encoding="utf-8") as f:
+    with open(txt_out, "w", encoding="utf-8-sig") as f:  # utf-8-sig = BOM, lisible par Notepad Windows
         for idx, text in sorted(strings.items()):
             f.write(f"[{idx:04d}] {text}\n")
     print(f"    Texte        → {txt_out}")
