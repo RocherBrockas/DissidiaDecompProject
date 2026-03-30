@@ -24,8 +24,8 @@ disasmOVL:
 	spimdisasm elfObjDisasm ./PlaceYourIsoHere/Extracted_Iso/PSP_GAME/USRDIR/DATA/OVL_BATTLE_APP.ELF ./DisasmResult/OVL_BATTLE_ELF/
 	spimdisasm elfObjDisasm ./PlaceYourIsoHere/Extracted_Iso/PSP_GAME/USRDIR/DATA/OVL_MENU_APP.ELF ./DisasmResult/OVL_MENU_ELF/
 	spimdisasm elfObjDisasm ./PlaceYourIsoHere/Extracted_Iso/PSP_GAME/USRDIR/DATA/OVL_EXTRA_APP.ELF ./DisasmResult/OVL_EXTRA_ELF/
-	spimdisasm elfObjDisasm ./PlaceYourIsoHere/Extracted_Iso/PSP_GAME/SYSDIRULUS10566_EBOOT.elf ./DisasmResult/
-	spimdisasm elfObjDisasm ./PlaceYourIsoHere/Extracted_Iso/PSP_GAME/USRDIR/DATA/MODULE/LIBSUPPREAC.PRX ./DisasmResult/MODULE
+	spimdisasm elfObjDisasm ./PlaceYourIsoHere/Extracted_Iso/PSP_GAME/SYSDIR/ULUS10566_EBOOT.elf ./DisasmResult/
+	spimdisasm elfObjDisasm ./PlaceYourIsoHere/Extracted_Iso/PSP_GAME/USRDIR/DATA/MODULE/LIBSUPPREACC.PRX ./DisasmResult/MODULE
 	spindisasm elfObjDisasm ./PlaceYourIsoHere/Extracted_Iso/PSP_GAME/USRDIR/DATA/MODULE/ULUS10566_LIBFONT.PRX ./DisasmResult/MODULE
 
 
