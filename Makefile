@@ -20,13 +20,13 @@ disasm-install:
 	python3 -m pip install -U splat64[mips]
 
 #Launch PPSSPP once and use developper tools to dump ISO and PRX files, you should dump decrypted Eboot.elf and Libfont.prx, place them near their crypted equivalent
-disasmOVL: disasm-install
+disasmOVL: 
 	spimdisasm elfObjDisasm ./PlaceYourIsoHere/Extracted_Iso/PSP_GAME/USRDIR/DATA/OVL_BATTLE_APP.ELF ./DisasmResult/OVL_BATTLE_ELF/
 	spimdisasm elfObjDisasm ./PlaceYourIsoHere/Extracted_Iso/PSP_GAME/USRDIR/DATA/OVL_MENU_APP.ELF ./DisasmResult/OVL_MENU_ELF/
 	spimdisasm elfObjDisasm ./PlaceYourIsoHere/Extracted_Iso/PSP_GAME/USRDIR/DATA/OVL_EXTRA_APP.ELF ./DisasmResult/OVL_EXTRA_ELF/
-	spimdisasm elfObjDisasm ./PlaceYourIsoHere/Extracted_Iso/SYSDIR/ULUS10566_EBOOT.elf ./DisasmResult/
-	spimdisasm elfObjDisasm ./PlaceYourIsoHere/Extracted_Iso/USRDIR/DATA/MODULE/LIBSUPPREAC.PRX ./DisasmResult/MODULE
-	spindisasm elfObjDisasm ./PlaceYourIsoHere/Extracted_Iso/USRDIR/DATA/MODULE/ULUS10566_LIBFONT.PRX ./DisasmResult/MODULE
+	spimdisasm elfObjDisasm ./PlaceYourIsoHere/Extracted_Iso/PSP_GAME/SYSDIRULUS10566_EBOOT.elf ./DisasmResult/
+	spimdisasm elfObjDisasm ./PlaceYourIsoHere/Extracted_Iso/PSP_GAME/USRDIR/DATA/MODULE/LIBSUPPREAC.PRX ./DisasmResult/MODULE
+	spindisasm elfObjDisasm ./PlaceYourIsoHere/Extracted_Iso/PSP_GAME/USRDIR/DATA/MODULE/ULUS10566_LIBFONT.PRX ./DisasmResult/MODULE
 
 
 clean:
