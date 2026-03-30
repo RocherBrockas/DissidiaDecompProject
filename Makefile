@@ -10,9 +10,13 @@ LDFLAGS = -L$(PSPSDK)/lib
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Disasm rule
-# Place your Iso in PlaceYourIsoHere and extract it with the dissidia modding suite in ./PlaceYourIsoHere/Extracted_Iso
+# Place your Iso in PlaceYourIsoHere and extract it with the winrar or 7z in ./PlaceYourIsoHere/Extracted_Iso
 %.asm: %.o
 	psp-objdump -d $< > $@
+
+prxtool:
+	sudo apt install prxtool
+	prxtool -e ./PlaceYourIsoHere/Extracted_Iso/PSP_GAME/USRDIR/DATA/MODULE/ULUS10566_LIBFONT.PRX -o libfont.elf > ./PlaceYourIsoHere/Extracted_Iso/PSP_GAME/USRDIR/DATA/MODULE/libfont.elf
 
 disasm-install:
 	sudo apt-get install python3-pip
@@ -26,8 +30,7 @@ disasmOVL:
 	spimdisasm elfObjDisasm ./PlaceYourIsoHere/Extracted_Iso/PSP_GAME/USRDIR/DATA/OVL_EXTRA_APP.ELF ./DisasmResult/OVL_EXTRA_ELF/
 	spimdisasm elfObjDisasm ./PlaceYourIsoHere/Extracted_Iso/PSP_GAME/SYSDIR/ULUS10566_EBOOT.elf ./DisasmResult/
 	spimdisasm elfObjDisasm ./PlaceYourIsoHere/Extracted_Iso/PSP_GAME/USRDIR/DATA/MODULE/LIBSUPPREACC.PRX ./DisasmResult/MODULE
-	spindisasm elfObjDisasm ./PlaceYourIsoHere/Extracted_Iso/PSP_GAME/USRDIR/DATA/MODULE/ULUS10566_LIBFONT.PRX ./DisasmResult/MODULE
-
+	spimdisasm elfObjDisasm ./PlaceYourIsoHere/Extracted_Iso/PSP_GAME/USRDIR/DATA/MODULE/libfont.elf ./DisasmResult/MODULE
 
 clean:
 	rm -f *.o *.asm
