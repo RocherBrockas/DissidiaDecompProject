@@ -21,6 +21,10 @@ Tools needed to help with the project:
 
 Find a ULUS-10566 ISO of the game and put it in PlaceYourIsoHere, and open it with UMDGen or any ISO extract tool,
 Extract the content to the ISO to the folder PlaceYourIsoHere/Extracted_Iso
+Launch PPSSPP once and use developper tools to dump ISO and PRX files, you should dump decrypted Eboot.elf and Libfont.prx, place them near their crypted equivalent
+
+In order to decompile the game you need to be on linux install.
+Then you can just run the disasm-install and disasmOVL rules of the Makefile.
 
 Then in the project Root run
 python ./Tools/PackageBinExtract/ExtractPackageBin.py

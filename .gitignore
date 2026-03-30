@@ -1,6 +1,10 @@
 # Prerequisites
 *.d
 
+# IDE
+.vs
+.vs/*
+
 # Object files
 *.o
 *.ko
