@@ -26,6 +26,9 @@ Launch PPSSPP once and use developper tools to dump ISO and PRX files, you shoul
 In order to decompile the game you need to be on linux install.
 Then you can just run the disasm-install and disasmOVL rules of the Makefile.
 
-Then in the project Root run
+The disasm might not fully disassemble the eboot.bin event if decrypted with ppsspp. 
+If so, open the decrypted eboot in ghidra and import the most symbol you can with the availble resource. then run the ExportElfTextFile.py script in ghidra to help you obtain a more complete eboot.text.s file
+
+Then in the project Root run (this can be done on any platform as long as you have python installed)
 python ./Tools/PackageBinExtract/ExtractPackageBin.py
 This should extract everything to the Extract folder.
