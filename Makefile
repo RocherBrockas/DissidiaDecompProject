@@ -24,6 +24,7 @@ OBJDUMP := $(PSPDEV)/bin/psp-objdump
 CFLAGS  := -O2 -G0 -Wall -I$(PSPSDK)/include
 ASFLAGS := -march=allegrex -mabi=eabi -mgp32 -EL
 LDFLAGS := -L$(PSPSDK)/lib
+LDFLAGS_ELF := -specs=$(PSPSDK)/lib/prxspecs -Wl,-q,-Tlinker.ld -nostartfiles
 
 # ============================================================
 # Python & Decomp Tools
@@ -118,16 +119,21 @@ package:
 	python3 ./Tools/PackageBinExtract/ExtractPackageBin.py
 
 # ============================================================
-# Disassembly
+# Disassembly Targets
 # ============================================================
 
+# Cible globale (désassemble tout)
+.PHONY: disasm
+
+disasm: disasmOVL disasmPRX
+
+# 1. Overlays Disassembly (BATTLE, MENU, EXTRA, EBOOT)
 .PHONY: disasmOVL
 
 disasmOVL: check
 	@mkdir -p "$(DISASM_ROOT)/OVL_BATTLE_ELF"
 	@mkdir -p "$(DISASM_ROOT)/OVL_MENU_ELF"
 	@mkdir -p "$(DISASM_ROOT)/OVL_EXTRA_ELF"
-	@mkdir -p "$(DISASM_ROOT)/MODULE"
 
 	@if [ -f "$(ISO_ROOT)/PSP_GAME/USRDIR/DATA/OVL_BATTLE_APP.ELF" ]; then \
 		echo ""; \
@@ -160,6 +166,15 @@ disasmOVL: check
 		"$(DISASM_ROOT)/"
 
 	@echo ""
+	@echo "Overlay disassembly complete."
+
+# 2. PRX disassembly (libfont, libsuppreacc)
+.PHONY: disasmPRX
+
+disasmPRX: check
+	@mkdir -p "$(DISASM_ROOT)/MODULE"
+
+	@echo ""
 	@SUPPREACC_FILE=$$(ls $(ISO_ROOT)/PSP_GAME/USRDIR/DATA/MODULE/*suppreacc* 2>/dev/null | head -n 1); \
 	if [ -f "$$SUPPREACC_FILE" ]; then \
 		if head -c 4 "$$SUPPREACC_FILE" | grep -q "ELF"; then \
@@ -183,7 +198,7 @@ disasmOVL: check
 	fi
 
 	@echo ""
-	@echo "Disassembly complete."
+	@echo "PRX Modules disassembly complete."
 
 # ============================================================
 # ELF Re-compilation
