@@ -1,0 +1,29 @@
+options:
+  platform: psp
+  compiler: GCC
+  endianness: little
+  
+  # source paths
+  target_path: PlaceYourIsoHere/Extracted_Iso/PSP_GAME/SYSDIR/ULUS10566_EBOOT.elf
+  base_path: .
+  asm_path: asm
+  src_path: src
+  build_path: build
+  
+  # output config
+  ld_script_path: linker.ld
+  symbol_addrs_path: symbol_addrs.txt
+  undefined_funcs_auto: True
+  undefined_syms_auto: True
+
+segments:
+  - name: eboot
+    type: code
+    start: 0x0
+    vram: 0x08804000  # Adresse VRAM standard pour les EBOOT PSP
+    subsegments:
+      - [0x0, header]
+      - [0x100, asm, main]        # Premier bloc en ASM
+      # when indentifying a function in C, remplace asm by c: 
+      # - [0x1000, c, battle_logic]
+      - [0x10000, data]

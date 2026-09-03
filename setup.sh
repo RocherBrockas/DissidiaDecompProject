@@ -101,6 +101,7 @@ echo
 
 if ! sudo apt-get install -y \
     build-essential \
+	clang \
     autoconf \
     automake \
     bison \
@@ -130,16 +131,11 @@ if ! sudo apt-get install -y \
     libarchive-dev \
     libusb-1.0-0-dev \
     libtool \
+	genisoimage \
     pkg-config
 then
     echo
     echo "[ERROR] Failed to install system dependencies."
-    exit 1
-fi
-
-if [ $? -ne 0 ]; then
-    echo
-    echo "[ERROR] Package installation failed."
     exit 1
 fi
 
@@ -162,40 +158,40 @@ if [ ! -x "$PSPDEV/bin/psp-gcc" ]; then
     echo "    $PSPDEV"
     echo
 
-	PSPDEV="$PSPDEV" PATH="$PSPDEV/bin:$PATH" bash -c '
-		set -e
+    PSPDEV="$PSPDEV" PATH="$PSPDEV/bin:$PATH" bash -c '
+        set -e
 
-		BOOTSTRAP_DIR="/tmp/pspdev-bootstrap"
+        BOOTSTRAP_DIR="/tmp/pspdev-bootstrap"
 
-		echo "[PSPDEV] Cloning PSPDEV..."
-		rm -rf "$BOOTSTRAP_DIR"
-		git clone https://github.com/pspdev/pspdev.git "$BOOTSTRAP_DIR"
+        echo "[PSPDEV] Cloning PSPDEV..."
+        rm -rf "$BOOTSTRAP_DIR"
+        git clone https://github.com/pspdev/pspdev.git "$BOOTSTRAP_DIR"
 
-		cd "$BOOTSTRAP_DIR"
+        cd "$BOOTSTRAP_DIR"
 
-		export PSPDEV="'"$PSPDEV"'"
-		export PATH="$PSPDEV/bin:$PATH"
+        export PSPDEV="'"$PSPDEV"'"
+        export PATH="$PSPDEV/bin:$PATH"
 
-		echo
-		echo "[PSPDEV] Installation directory:"
-		echo "         $PSPDEV"
-		echo
-		echo "[PSPDEV] PATH:"
-		echo "         $PATH"
-		echo
+        echo
+        echo "[PSPDEV] Installation directory:"
+        echo "         $PSPDEV"
+        echo
+        echo "[PSPDEV] PATH:"
+        echo "         $PATH"
+        echo
 
-		sudo mkdir -p "$PSPDEV"
-		sudo chown -R "$USER:$USER" "$PSPDEV"
+        sudo mkdir -p "$PSPDEV"
+        sudo chown -R "$USER:$USER" "$PSPDEV"
 
-		echo "[PSPDEV] Running dependency check..."
-		./depends/check-dependencies.sh
+        echo "[PSPDEV] Running dependency check..."
+        ./depends/check-dependencies.sh
 
-		echo
-		echo "[PSPDEV] Building PSPDEV..."
-		echo
+        echo
+        echo "[PSPDEV] Building PSPDEV..."
+        echo
 
-		./build-all.sh
-	'
+        ./build-all.sh
+    '
 
     # Only remove the bootstrap directory after a successful build.
     rm -rf /tmp/pspdev-bootstrap
@@ -210,12 +206,44 @@ fi
 echo "[OK] PSPDEV found."
 
 # ------------------------------------------------------------
-# Environment
+# Environment variables export
 # ------------------------------------------------------------
 
 PSPDEV="${PSPDEV:-$HOME/pspdev}"
 export PSPDEV
 export PATH="$PSPDEV/bin:$PATH"
+
+# ------------------------------------------------------------
+# Build & Install pspdecrypt / prxdec
+# ------------------------------------------------------------
+
+echo
+echo "[2.5/5] Checking PSP Decryption tools (pspdecrypt)..."
+
+if [ ! -x "$PSPDEV/bin/pspdecrypt" ]; then
+    echo "[INFO] Compiling pspdecrypt..."
+    BUILD_DIR="/tmp/pspdecrypt-build"
+    rm -rf "$BUILD_DIR"
+    
+    if git clone --recursive https://github.com/John-K/pspdecrypt.git "$BUILD_DIR"; then
+        cd "$BUILD_DIR"
+        if make; then
+            cp pspdecrypt "$PSPDEV/bin/"
+            chmod +x "$PSPDEV/bin/pspdecrypt"
+            # Crée un alias symlink vers prxdec au cas où
+            ln -sf "$PSPDEV/bin/pspdecrypt" "$PSPDEV/bin/prxdec"
+            echo "[OK] pspdecrypt installed to $PSPDEV/bin/"
+        else
+            echo "[WARNING] Failed to build pspdecrypt."
+        fi
+        cd "$PROJECT_ROOT"
+        rm -rf "$BUILD_DIR"
+    else
+        echo "[WARNING] Could not clone pspdecrypt repository."
+    fi
+else
+    echo "[OK] pspdecrypt found."
+fi
 
 # ------------------------------------------------------------
 # Python environment
@@ -265,6 +293,14 @@ psp-gcc --version | head -n 1
 echo
 echo "psp-objdump:"
 psp-objdump --version | head -n 1
+
+echo
+echo "pspdecrypt / prxdec:"
+if command -v pspdecrypt >/dev/null 2>&1; then
+    echo "  OK ($(command -v pspdecrypt))"
+else
+    echo "  WARNING: pspdecrypt not found"
+fi
 
 echo
 echo "Python:"

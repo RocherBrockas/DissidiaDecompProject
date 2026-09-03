@@ -275,10 +275,38 @@ ok "ISO copied."
 echo
 echo "[4/8] Extracting ISO..."
 
-if [ ! -f "$ISO_EXTRACT/PSP_GAME/PARAM.SFO" ]; then
+NEED_EXTRACTION=true
 
-    rm -rf "$ISO_EXTRACT"
-    mkdir -p "$ISO_EXTRACT"
+if [ -f "$ISO_EXTRACT/PSP_GAME/PARAM.SFO" ]; then
+
+    echo
+    echo "An extracted ISO environment was already found at:"
+    echo "    $ISO_EXTRACT"
+    echo
+    echo "Options:"
+    echo "    [s] Skip extraction and keep existing files"
+    echo "    [c] Clean extracted folder and re-extract"
+    echo
+
+    read -r -p "Choice [s/c] (default: s): " EXTRACT_CHOICE
+
+    case "${EXTRACT_CHOICE:-s}" in
+        c|C)
+            info "Cleaning existing extracted files..."
+            rm -rf "$ISO_EXTRACT"
+            mkdir -p "$ISO_EXTRACT"
+            ;;
+        s|S|*)
+            info "Skipping ISO extraction."
+            NEED_EXTRACTION=false
+            ;;
+    esac
+
+fi
+
+if [ "$NEED_EXTRACTION" = true ]; then
+
+    info "Extracting ISO contents..."
 
     7z x \
         "$ISO_DEST" \
@@ -343,28 +371,62 @@ fi
 ok "Decrypted EBOOT found."
 
 # ------------------------------------------------------------
-# libfont
+# Modules (libfont & libsuppreacc)
 # ------------------------------------------------------------
 
-if [ ! -f "$DECRYPTED_LIBFONT" ]; then
+MODULES=("libfont" "libsuppreacc")
 
-    echo
-    echo "The decrypted libfont has not been found."
-    echo
-    echo "Expected:"
-    echo
-    echo "    $DECRYPTED_LIBFONT"
-    echo
+for MODULE in "${MODULES[@]}"; do
+    PRX_SRC="$ISO_EXTRACT/PSP_GAME/USRDIR/DATA/MODULE/${MODULE}.prx"
+    ELF_DEST="$ISO_EXTRACT/PSP_GAME/USRDIR/DATA/MODULE/${MODULE}.elf"
+    ALT_PRX="$ISO_EXTRACT/PSP_GAME/USRDIR/DATA/MODULE/ULUS10566_$(echo "$MODULE" | tr '[:lower:]' '[:upper:]').PRX"
 
-    read -r -p "Press ENTER when libfont.elf is ready..."
+    if [ ! -f "$ELF_DEST" ] && [ -f "$ALT_PRX" ]; then
+        info "Found alternate file $(basename "$ALT_PRX"), using it as ${MODULE}.elf..."
+        cp "$ALT_PRX" "$ELF_DEST"
+    fi
 
-fi
+    if [ ! -f "$ELF_DEST" ] && [ "$MODULE" = "libsuppreacc" ] && [ -f "$PRX_SRC" ]; then
+        info "libsuppreacc is unencrypted, converting directly to elf..."
+        cp "$PRX_SRC" "$ELF_DEST"
+    fi
 
-if [ ! -f "$DECRYPTED_LIBFONT" ]; then
-    error "Decrypted libfont not found."
-fi
+    if [ ! -f "$ELF_DEST" ] && [ -f "$PRX_SRC" ]; then
+        info "Attempting to decrypt ${MODULE}.prx..."
+        
+        if command -v prxdecompress >/dev/null 2>&1; then
+            prxdecompress "$PRX_SRC" "$ELF_DEST" 2>/dev/null || true
+        elif command -v prxdec >/dev/null 2>&1; then
+            prxdec "$PRX_SRC" "$ELF_DEST" 2>/dev/null || true
+        elif command -v pspdecrypt >/dev/null 2>&1; then
+            pspdecrypt -o "$ELF_DEST" "$PRX_SRC" 2>/dev/null || true
+        fi
+    fi
 
-ok "Decrypted libfont found."
+    # 4. Validation finale
+    if [ ! -f "$ELF_DEST" ]; then
+        echo
+        echo "The decrypted ${MODULE}.elf has not been found."
+        echo
+        echo "Expected:"
+        echo "    $ELF_DEST"
+        echo
+        echo "Press ENTER once ${MODULE}.elf is ready, or type 's' to skip..."
+        echo
+
+        read -r -p "Choice [Enter/s]: " MODULE_CHOICE
+
+        if [ "$MODULE_CHOICE" = "s" ] || [ "$MODULE_CHOICE" = "S" ]; then
+            info "Skipping ${MODULE} check."
+        elif [ ! -f "$ELF_DEST" ]; then
+            error "Decrypted ${MODULE} not found."
+        else
+            ok "Decrypted ${MODULE} found."
+        fi
+    else
+        ok "Decrypted ${MODULE} found."
+    fi
+done
 
 # ------------------------------------------------------------
 # 7. package.bin
@@ -373,8 +435,44 @@ ok "Decrypted libfont found."
 echo
 echo "[7/8] Extracting package.bin..."
 
-python3 \
-    "$PROJECT_ROOT/Tools/PackageBinExtract/ExtractPackageBin.py"
+NEED_PACKAGE_EXTRACT=true
+EXTRACTED_PKG_DIR="$PROJECT_ROOT/Extract"
+
+if [ -d "$EXTRACTED_PKG_DIR" ] && [ "$(ls -A "$EXTRACTED_PKG_DIR" 2>/dev/null)" ]; then
+
+    echo
+    echo "Extracted package files were already found at:"
+    echo "    $EXTRACTED_PKG_DIR"
+    echo
+    echo "Options:"
+    echo "    [s] Skip package.bin extraction and keep existing files"
+    echo "    [c] Clean extracted folder and re-extract"
+    echo
+
+    read -r -p "Choice [s/c] (default: s): " PKG_CHOICE
+
+    case "${PKG_CHOICE:-s}" in
+        c|C)
+            info "Cleaning existing extracted package files..."
+            rm -rf "$EXTRACTED_PKG_DIR"
+            mkdir -p "$EXTRACTED_PKG_DIR"
+            ;;
+        s|S|*)
+            info "Skipping package.bin extraction."
+            NEED_PACKAGE_EXTRACT=false
+            ;;
+    esac
+
+fi
+
+if [ "$NEED_PACKAGE_EXTRACT" = true ]; then
+
+    info "Extracting package.bin..."
+
+    python3 \
+        "$PROJECT_ROOT/Tools/PackageBinExtract/ExtractPackageBin.py"
+
+fi
 
 ok "package.bin extracted."
 
@@ -385,7 +483,43 @@ ok "package.bin extracted."
 echo
 echo "[8/8] Running initial disassembly..."
 
-make disasmOVL
+RUN_DISASM=true
+DISASM_DIR="$PROJECT_ROOT/DisasmResult"
+
+if [ -d "$DISASM_DIR" ] && [ "$(ls -A "$DISASM_DIR" 2>/dev/null)" ]; then
+
+    echo
+    echo "Disassembly results were already found at:"
+    echo "    $DISASM_DIR"
+    echo
+    echo "Options:"
+    echo "    [s] Skip disassembly and keep existing files"
+    echo "    [c] Clean disassembly folder and re-disassemble"
+    echo
+
+    read -r -p "Choice [s/c] (default: s): " DISASM_CHOICE
+
+    case "${DISASM_CHOICE:-s}" in
+        c|C)
+            info "Cleaning existing disassembly results..."
+            rm -rf "$DISASM_DIR"
+            mkdir -p "$DISASM_DIR"
+            ;;
+        s|S|*)
+            info "Skipping disassembly."
+            RUN_DISASM=false
+            ;;
+    esac
+
+fi
+
+if [ "$RUN_DISASM" = true ]; then
+
+    info "Running disassembly..."
+
+    make disasmOVL
+
+fi
 
 ok "Initial disassembly complete."
 
