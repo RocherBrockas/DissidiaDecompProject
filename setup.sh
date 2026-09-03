@@ -31,15 +31,75 @@ if ! command -v apt-get >/dev/null 2>&1; then
 fi
 
 # ------------------------------------------------------------
+# Sudo authentication
+# ------------------------------------------------------------
+
+echo
+echo "============================================================"
+echo " Checking administrator access"
+echo "============================================================"
+echo
+
+if ! command -v sudo >/dev/null 2>&1; then
+    echo "[ERROR] sudo is not installed."
+    echo "[ERROR] Please install sudo before continuing."
+    exit 1
+fi
+
+echo "[INFO] Administrator privileges are required to install"
+echo "       system dependencies."
+echo
+
+echo "[INFO] Please enter your WSL/Linux password when prompted."
+echo
+
+if ! sudo -v; then
+    echo
+    echo "[ERROR] sudo authentication failed."
+    echo "[ERROR] The setup cannot continue without administrator privileges."
+    exit 1
+fi
+
+echo
+echo "[OK] Administrator access confirmed."
+
+# ------------------------------------------------------------
 # System dependencies
 # ------------------------------------------------------------
 
 echo
 echo "[1/5] Installing system dependencies..."
+echo
 
-sudo apt-get update
+echo "============================================================"
+echo " Updating APT package lists"
+echo "============================================================"
+echo
 
-sudo apt-get install -y \
+echo "[APT] Updating package lists..."
+sudo apt-get update \
+    -o Acquire::Retries=3 \
+    -o APT::Update::Progress-Fancy="1"
+
+STATUS=$?
+
+if [ $STATUS -ne 0 ]; then
+    echo "[ERROR] apt-get update failed with exit code $STATUS"
+    exit $STATUS
+fi
+
+echo "[APT] Package lists updated successfully."
+
+echo
+echo "[OK] APT package lists updated."
+echo
+
+echo "============================================================"
+echo " Installing required packages"
+echo "============================================================"
+echo
+
+if ! sudo apt-get install -y \
     build-essential \
     autoconf \
     automake \
@@ -48,6 +108,8 @@ sudo apt-get install -y \
     gettext \
     texinfo \
     cmake \
+    meson \
+    ninja-build \
     patch \
     git \
     wget \
@@ -57,6 +119,10 @@ sudo apt-get install -y \
     python3 \
     python3-venv \
     python3-pip \
+    gpg \
+    libgpgme-dev \
+    openssl \
+    libssl-dev \
     libgmp-dev \
     libmpfr-dev \
     libmpc-dev \
@@ -65,7 +131,19 @@ sudo apt-get install -y \
     libusb-1.0-0-dev \
     libtool \
     pkg-config
+then
+    echo
+    echo "[ERROR] Failed to install system dependencies."
+    exit 1
+fi
 
+if [ $? -ne 0 ]; then
+    echo
+    echo "[ERROR] Package installation failed."
+    exit 1
+fi
+
+echo
 echo "[OK] System dependencies installed."
 
 # ------------------------------------------------------------
@@ -84,18 +162,42 @@ if [ ! -x "$PSPDEV/bin/psp-gcc" ]; then
     echo "    $PSPDEV"
     echo
 
-    PSPDEV="$PSPDEV" bash -c '
-        git clone https://github.com/pspdev/pspdev.git /tmp/pspdev-bootstrap
-        cd /tmp/pspdev-bootstrap
+	PSPDEV="$PSPDEV" PATH="$PSPDEV/bin:$PATH" bash -c '
+		set -e
 
-        export PSPDEV="'"$PSPDEV"'"
+		BOOTSTRAP_DIR="/tmp/pspdev-bootstrap"
 
-        sudo mkdir -p "$PSPDEV"
-        sudo chown -R "$USER:$USER" "$PSPDEV"
+		echo "[PSPDEV] Cloning PSPDEV..."
+		rm -rf "$BOOTSTRAP_DIR"
+		git clone https://github.com/pspdev/pspdev.git "$BOOTSTRAP_DIR"
 
-        ./build-all.sh
-    '
+		cd "$BOOTSTRAP_DIR"
 
+		export PSPDEV="'"$PSPDEV"'"
+		export PATH="$PSPDEV/bin:$PATH"
+
+		echo
+		echo "[PSPDEV] Installation directory:"
+		echo "         $PSPDEV"
+		echo
+		echo "[PSPDEV] PATH:"
+		echo "         $PATH"
+		echo
+
+		sudo mkdir -p "$PSPDEV"
+		sudo chown -R "$USER:$USER" "$PSPDEV"
+
+		echo "[PSPDEV] Running dependency check..."
+		./depends/check-dependencies.sh
+
+		echo
+		echo "[PSPDEV] Building PSPDEV..."
+		echo
+
+		./build-all.sh
+	'
+
+    # Only remove the bootstrap directory after a successful build.
     rm -rf /tmp/pspdev-bootstrap
 fi
 
@@ -111,6 +213,7 @@ echo "[OK] PSPDEV found."
 # Environment
 # ------------------------------------------------------------
 
+PSPDEV="${PSPDEV:-$HOME/pspdev}"
 export PSPDEV
 export PATH="$PSPDEV/bin:$PATH"
 
